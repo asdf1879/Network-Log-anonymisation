@@ -1,0 +1,8 @@
+log_file: "suricata_logs.txt"
+log_type: "suricata"
+output_log: "anonymized_suricata.txt"
+
+anonymization:
+  ip: "salt"          # Options: truncate, mask
+  port: "salt"  # Options: shuffle, generalize
+  timestamp: "round"  # Options: round, degrade
