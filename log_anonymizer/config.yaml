@@ -1,0 +1,12 @@
+log_file: "suricata_logs.txt"
+log_type: "custom"     # Options: suricata, zeek, custom
+output_log: "anonymized_suricata.txt"
+
+anonymization:
+  ip: "salt"          # Options: truncate, mask,salt, condensation
+  port: "salt"  # Options: shuffle, generalize
+  timestamp: "round"  # Options: round, random_shift, perturb
+  # data : "differential" # Options: differential
+  custom_format: 
+    pattern: "(?P<timestamp>\\d{2}/\\d{2}/\\d{4}-\\d{2}:\\d{2}:\\d{2}\\.\\d+)  \\[\\*\\*\\] (?P<alert>.*?) \\[\\*\\*\\] \\[Classification: (?P<classification>.*?)\\] \\[Priority: (?P<priority>\\d+)\\] \\{(?P<protocol>.*?)\\} (?P<src_ip>\\d+\\.\\d+\\.\\d+\\.\\d+):(?P<src_port>\\d+) -> (?P<dest_ip>\\d+\\.\\d+\\.\\d+\\.\\d+):(?P<dest_port>\\d+)"
+    fields: ["timestamp", "src_ip", "src_port", "dest_ip", "dest_port"]
