@@ -84,3 +84,48 @@ def round_to_nearest_15_minutes_column(timestamp_series: pd.Series) -> pd.Series
             return ts  # Keep as is if invalid
     
     return timestamp_series.map(round_time)
+
+
+def order_preserving_adaptive_noise(timestamp_series: pd.Series, apply_global_offset=True) -> pd.Series:
+    """
+    Applies adaptive, order-preserving noise to sorted timestamps.
+    Each timestamp is perturbed within bounds that preserve order.
+
+    Parameters:
+    - timestamp_series: A sorted pd.Series of timestamps in string format.
+    - apply_global_offset: Whether to apply a global random offset to all timestamps.
+
+    Returns:
+    - A pd.Series of obfuscated timestamps as strings.
+    """
+    # Convert to datetime
+    timestamps = pd.to_datetime(timestamp_series, errors='coerce')
+    if timestamps.isnull().any():
+        raise ValueError("Timestamp series contains invalid datetime entries.")
+
+    perturbed = []
+
+    for i in range(len(timestamps)):
+        Ti = timestamps[i]
+
+        if i == 0:
+            delta = (timestamps[i + 1] - Ti) / 2
+            low, high = timedelta(0), delta
+        elif i == len(timestamps) - 1:
+            delta = (Ti - timestamps[i - 1]) / 2
+            low, high = -delta, timedelta(0)
+        else:
+            delta1 = (Ti - timestamps[i - 1]) / 2
+            delta2 = (timestamps[i + 1] - Ti) / 2
+            delta = min(delta1, delta2)
+            low, high = -delta, delta
+
+        noise = timedelta(seconds=random.uniform(low.total_seconds(), high.total_seconds()))
+        perturbed.append(Ti + noise)
+
+    if apply_global_offset:
+        global_offset = timedelta(seconds=random.randint(-3600, 3600))  # ±1 hour
+        perturbed = [ts + global_offset for ts in perturbed]
+
+    return pd.Series([ts.strftime("%m/%d/%Y-%H:%M:%S.%f")[:-3] for ts in perturbed],
+                     index=timestamp_series.index)
