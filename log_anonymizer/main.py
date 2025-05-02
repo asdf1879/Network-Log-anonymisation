@@ -6,10 +6,11 @@ from anonymizer.log_reconstructor import replace_anonymized_values
 from anonymizer.ip_anonymizer import anonymize_ip_column
 from anonymizer.port_anonymizer import anonymize_port_column
 from anonymizer.timestamp_anonymizer import round_to_nearest_15_minutes_column
-from anonymizer.timestamp_anonymizer import perturb_time_column, bucketize_dates_column
+from anonymizer.timestamp_anonymizer import perturb_time_column, bucketize_dates_column, order_preserving_adaptive_noise
 from anonymizer.ipmask import generalize_ip
 from anonymizer.differential import add_noise
 from anonymizer.paper_imple import anonymize_ip_addresses
+from anonymizer.convert_to_ocsf import convert_to_ocsf
 import os
 
 def load_config(config_path):
@@ -37,6 +38,11 @@ def main():
 
     # Step 1: Parse logs
     df_logs, df_mapping = parse_logs(log_file, log_type, temp_csv, mapping_file,config)
+    
+    ocsffile = "ocsf_logs.json"
+    # Convert to OCSF format
+    convert_to_ocsf(df_logs, log_type, ocsffile)
+
 
     # Step 2: Apply anonymization methods based on config
     if "timestamp" in anonymization:
@@ -46,6 +52,8 @@ def main():
             df_logs["timestamp"] = perturb_time_column(df_logs["timestamp"], window_minutes=5)
         if anonymization["timestamp"] == "bucketize":
             df_logs["timestamp"] = bucketize_dates_column(df_logs["timestamp"], resolution="day")
+        if anonymization["timestamp"] == "adaptive":
+            df_logs["timestamp"] = order_preserving_adaptive_noise(df_logs["timestamp"], apply_global_offset=True)
         
 
     if "ip" in anonymization:
