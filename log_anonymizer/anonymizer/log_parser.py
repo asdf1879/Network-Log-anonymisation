@@ -137,7 +137,7 @@ def _custom_parser(log_file, pattern, config):
     logs = []
     mapping = []
 
-    with open(log_file, "r") as f:
+    with open(log_file, "r", encoding="utf-8", errors="replace") as f:
         for line_no, line in enumerate(f, start=1):
             match = pattern.search(line)
             if match:
@@ -146,6 +146,7 @@ def _custom_parser(log_file, pattern, config):
                 logs.append(log_entry)
                 fields_from_config = config.get("anonymization", {}).get("custom_format", {}).get("fields", [])
                 for field in fields_from_config:
+                    # print(f"field is {field}")
                     if field in log_entry:
                         if field in match.re.groupindex:
                             offset = match.start(field)  # 👈 this gives position of field in line
